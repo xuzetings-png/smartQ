@@ -18,6 +18,7 @@
 - 展示组件通过属性接收数据和动作；网络请求、缓存/加载状态和错误转换集中在功能 API 模块或自定义 Hook。
 - 组件拆分依据职责、变化原因和复用位置，不按固定行数拆分。避免大组件承载页面、请求、数据转换和错误处理的全部逻辑。
 - 后端外部依赖通过适配器访问。应用用例接收依赖并编排行为，不在路由或页面中直接创建数据库连接。
+- 所有页面必须使用固定视口的应用外壳。`html`、`body`、`#root` 和 `.app-shell` 不产生页面级滚动；模块长内容由 `.page-content` 在内部纵向滚动，侧栏与顶栏保持固定。新增模块后需在浏览器中检查实际滚动位置，并通过 `pnpm check:layout`。
 
 ## 类型与错误
 
@@ -38,6 +39,7 @@
 
 - `pnpm format` 统一格式；`pnpm format:check` 检查格式，不通过手工争论格式差异。
 - `pnpm lint` 使用 ESLint 检查全仓库 JavaScript、TypeScript、React Hooks 和类型安全规则，并将警告视为失败；`pnpm lint:css` 使用 Stylelint 检查 CSS。
+- `pnpm check:layout` 检查固定视口和模块内滚动所需的全局 CSS 约定，防止页面滚动边界被意外移除。
 - `pnpm check:shell` 检查演示数据库 Bash 脚本语法；`pnpm check:compose` 检查 Compose 配置但不启动容器；`pnpm build` 检查各工作区 TypeScript、CSS 处理和生产构建。
 - 每次代码或配置改动后执行 `pnpm check:diagnostics`；交付前执行 `pnpm quality`。新增文件类型时，先确定编辑器诊断来源，再将检查接入诊断命令与 CI。
 - `pnpm test` 运行 Vitest 回归用例；优先覆盖请求边界、业务规则和状态转换，不为尚未实现的流程写模拟性测试。
