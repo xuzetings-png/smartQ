@@ -1,0 +1,23 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: smartq-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?请在 .env.local 设置 MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: smartq_demo
+      MYSQL_READER_PASSWORD: ${MYSQL_READER_PASSWORD:?请在 .env.local 设置 MYSQL_READER_PASSWORD}
+      TZ: Asia/Shanghai
+    ports:
+      - '127.0.0.1:3306:3306'
+    volumes:
+      - smartq-mysql-data:/var/lib/mysql
+      - ./init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', '127.0.0.1', '-uroot', '-p${MYSQL_ROOT_PASSWORD}']
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+volumes:
+  smartq-mysql-data:

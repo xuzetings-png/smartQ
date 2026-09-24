@@ -1,0 +1,41 @@
+{
+  "name": "smartq-learning",
+  "private": true,
+  "packageManager": "pnpm@10.34.2",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "better-sqlite3",
+      "esbuild"
+    ]
+  },
+  "scripts": {
+    "dev": "pnpm --parallel --filter @smartq/api --filter @smartq/web dev",
+    "build": "pnpm -r build",
+    "check:runtime": "node scripts/check-runtime.mjs",
+    "check:spec": "openspec validate --all --no-interactive && openspec validate --archived --no-interactive",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint apps packages tests",
+    "lint:fix": "eslint apps packages tests --fix",
+    "format": "prettier --write \"apps/**/*.{ts,tsx,css,json}\" \"packages/**/*.{ts,json}\" \"tests/**/*.{ts,json}\" \"scripts/**/*.mjs\" \"demo/**/*.{yaml,yml}\" \".github/workflows/*.{yaml,yml}\" \"openspec/**/*.{md,yaml,yml}\" \"openspec/changes/**/.openspec.yaml\" \"docs/engineering/{code-guidelines,harness}.md\" \"docs/research/harness-engineering.md\" \"AGENTS.md\" \"README.md\" \"vitest.config.ts\" \"*.{json,mjs,yaml,yml}\"",
+    "format:check": "prettier --check \"apps/**/*.{ts,tsx,css,json}\" \"packages/**/*.{ts,json}\" \"tests/**/*.{ts,json}\" \"scripts/**/*.mjs\" \"demo/**/*.{yaml,yml}\" \".github/workflows/*.{yaml,yml}\" \"openspec/**/*.{md,yaml,yml}\" \"openspec/changes/**/.openspec.yaml\" \"docs/engineering/{code-guidelines,harness}.md\" \"docs/research/harness-engineering.md\" \"AGENTS.md\" \"README.md\" \"vitest.config.ts\" \"*.{json,mjs,yaml,yml}\"",
+    "quality": "pnpm check:runtime && pnpm check:spec && pnpm format:check && pnpm lint && pnpm test && pnpm build",
+    "db:up": "docker compose --env-file .env.local -f demo/mysql/compose.yaml up -d",
+    "db:down": "docker compose --env-file .env.local -f demo/mysql/compose.yaml down",
+    "db:seed": "pnpm --filter @smartq/api db:seed"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@fission-ai/openspec": "1.13.2",
+    "eslint": "10.11.0",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "eslint-plugin-react-refresh": "0.5.7",
+    "prettier": "3.9.9",
+    "typescript-eslint": "8.70.1",
+    "vitest": "5.0.1"
+  }
+}
