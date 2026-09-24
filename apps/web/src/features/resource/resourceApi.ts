@@ -1,4 +1,4 @@
-import type { ResourceConfigurationInput } from '@smartq/contracts';
+import type { PlanPreviewResponse, ResourceConfigurationInput } from '@smartq/contracts';
 import { requestJson } from '../../shared/api/apiClient';
 
 export type ResourceStatus = 'draft' | 'active' | 'needs_review';
@@ -87,5 +87,12 @@ export const resourceApi = {
 
   acceptSchema(id: string) {
     return requestJson<ResourceDetail>(`/api/resources/${id}/schema/accept`, { method: 'POST' });
+  },
+
+  previewPlan(id: string, input: { question: string; configuration: ResourceConfigurationInput }) {
+    return requestJson<PlanPreviewResponse>(`/api/resources/${id}/plan-preview`, {
+      method: 'POST',
+      body: JSON.stringify(input),
+    });
   },
 };

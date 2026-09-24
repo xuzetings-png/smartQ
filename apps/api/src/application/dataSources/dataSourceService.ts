@@ -8,6 +8,7 @@ import {
 import {
   listMysqlTables,
   previewMysqlTable,
+  readMysqlTablePage,
   testMysqlConnection,
 } from '../../infrastructure/mysql/mysqlAdapter.js';
 
@@ -82,6 +83,25 @@ export async function getTablePreview(id: string, tableName: string, limit: numb
   } catch (error) {
     if (error instanceof AppError) throw error;
     throw dataSourceUnavailable('读取样例数据失败，请确认数据库正在运行');
+  }
+}
+
+export async function getTableDataPage(
+  id: string,
+  tableName: string,
+  page: number,
+  pageSize: number,
+) {
+  const source = requireDataSource(id);
+  try {
+    const schema = await listMysqlTables(source);
+    if (!schema.tables.some((table) => table.name === tableName)) {
+      throw new AppError('数据表不存在或不可访问', 404, 'TABLE_NOT_FOUND');
+    }
+    return await readMysqlTablePage(source, tableName, page, pageSize);
+  } catch (error) {
+    if (error instanceof AppError) throw error;
+    throw dataSourceUnavailable('读取完整数据失败，请检查数据库状态后重试');
   }
 }
 

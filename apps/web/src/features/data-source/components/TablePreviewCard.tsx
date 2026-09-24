@@ -1,5 +1,5 @@
-import { Button, Card, Table, Tag, Typography } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
+import { Button, Card, Space, Table, Tag, Typography } from 'antd';
+import { EyeOutlined, PlusOutlined } from '@ant-design/icons';
 import type { TableColumnsType } from 'antd';
 import type { TablePreview } from '../dataSourceApi';
 import { StepTitle } from './StepTitle';
@@ -9,10 +9,11 @@ const { Text } = Typography;
 type Props = {
   preview: TablePreview;
   loading: boolean;
+  onViewFullData: () => void;
   onCreateResource: () => void;
 };
 
-export function TablePreviewCard({ preview, loading, onCreateResource }: Props) {
+export function TablePreviewCard({ preview, loading, onViewFullData, onCreateResource }: Props) {
   const columns: TableColumnsType<Record<string, unknown>> = preview.columns.map((column) => ({
     title: (
       <span>
@@ -51,7 +52,12 @@ export function TablePreviewCard({ preview, loading, onCreateResource }: Props) 
         locale={{ emptyText: '这张表还没有数据' }}
       />
       <div className="preview-footer">
-        <Text type="secondary">字段结构 {preview.columns.length} 列</Text>
+        <Space wrap>
+          <Text type="secondary">字段结构 {preview.columns.length} 列</Text>
+          <Button icon={<EyeOutlined />} onClick={onViewFullData}>
+            查看完整数据
+          </Button>
+        </Space>
         <Button type="primary" icon={<PlusOutlined />} onClick={onCreateResource}>
           创建问数资源
         </Button>

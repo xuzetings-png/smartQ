@@ -2,6 +2,8 @@ import type { ResourceConfigurationInput } from '@smartq/contracts';
 import { compareResourceSchema } from '../../domain/resources/schemaChanges.js';
 import { validateResourceConfiguration } from '../../domain/resources/resourceConfigurationRules.js';
 import { getMysqlTableColumns, type MysqlColumn } from '../../infrastructure/mysql/mysqlAdapter.js';
+import { getImportedTableColumns } from '../../infrastructure/sqlite/importedDataRepository.js';
+import { findResourceDataSourceById } from '../../infrastructure/sqlite/dataSourceRepository.js';
 import {
   acceptObservedSchema,
   createDraftResource,
@@ -117,10 +119,16 @@ export async function refreshResourceSchema(resourceId: string) {
   const resource = getResourceSchemaContext(resourceId);
   if (!resource) throw new AppError('未找到问数资源', 404, 'RESOURCE_NOT_FOUND');
 
-  const source = requireDataSource(resource.dataSourceId);
+  const source = findResourceDataSourceById(resource.dataSourceId);
+  if (!source) {
+    throw new AppError('找不到数据源配置，请检查后重试', 503, 'DATA_SOURCE_UNAVAILABLE');
+  }
   let columns: MysqlColumn[];
   try {
-    columns = await getMysqlTableColumns(source, resource.tableName);
+    columns =
+      source.kind === 'mysql'
+        ? await getMysqlTableColumns(source, resource.tableName)
+        : getImportedTableColumns(source.id, resource.tableName);
   } catch {
     throw new AppError('无法读取数据表结构，请检查数据源连接', 503, 'RESOURCE_SCHEMA_UNAVAILABLE');
   }

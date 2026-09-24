@@ -8,6 +8,10 @@ function getEncryptionKey(): Buffer {
   return Buffer.from(encodedKey, 'hex');
 }
 
+export function assertEncryptionKeyConfigured() {
+  void getEncryptionKey();
+}
+
 export function encryptSecret(value: string) {
   const iv = randomBytes(12);
   const cipher = createCipheriv('aes-256-gcm', getEncryptionKey(), iv);

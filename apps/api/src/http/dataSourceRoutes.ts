@@ -1,10 +1,15 @@
 import { Router } from 'express';
-import { dataSourceInputSchema, dataSourceUpdateSchema } from '@smartq/contracts';
+import {
+  dataSourceInputSchema,
+  dataSourceUpdateSchema,
+  tableDataPageQuerySchema,
+} from '@smartq/contracts';
 import { asyncRoute } from './asyncRoute.js';
 import {
   createDataSource,
   getDataSourceSchema,
   getDataSources,
+  getTableDataPage,
   getTablePreview,
   testNewDataSource,
   testSavedDataSource,
@@ -87,6 +92,27 @@ dataSourceRoutes.get(
         String(request.params.id),
         String(request.params.table),
         Number.isFinite(limit) ? Math.trunc(limit) : 20,
+      ),
+    );
+  }),
+);
+
+dataSourceRoutes.get(
+  '/:id/tables/:table/rows',
+  asyncRoute(async (request, response) => {
+    const query = tableDataPageQuerySchema.safeParse(request.query);
+    if (!query.success) {
+      response.status(400).json({
+        error: { code: 'VALIDATION_ERROR', message: '页码或每页行数不正确' },
+      });
+      return;
+    }
+    response.json(
+      await getTableDataPage(
+        String(request.params.id),
+        String(request.params.table),
+        query.data.page,
+        query.data.pageSize,
       ),
     );
   }),

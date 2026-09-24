@@ -12,7 +12,7 @@
     ]
   },
   "scripts": {
-    "dev": "pnpm --parallel --filter @smartq/api --filter @smartq/web dev",
+    "dev": "pnpm check:runtime && pnpm --parallel --filter @smartq/api --filter @smartq/web dev",
     "build": "pnpm -r build",
     "check:runtime": "node scripts/check-runtime.mjs",
     "check:layout": "node scripts/check-layout-scroll-contract.mjs",

@@ -155,13 +155,13 @@ function normalizeAlias(value: string) {
   return value.trim().toLocaleLowerCase();
 }
 
-function isNumericMysqlType(mysqlType: string) {
+export function isNumericMysqlType(mysqlType: string) {
   return /^(tinyint|smallint|mediumint|int|integer|bigint|decimal|numeric|float|double|real)(\b|\()/i.test(
     mysqlType,
   );
 }
 
-function isAggregationCompatible(mysqlType: string, aggregation: string) {
+export function isAggregationCompatible(mysqlType: string, aggregation: string) {
   return aggregation === 'count' || isNumericMysqlType(mysqlType);
 }
 

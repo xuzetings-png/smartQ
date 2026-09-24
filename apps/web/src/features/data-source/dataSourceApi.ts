@@ -1,3 +1,4 @@
+import type { TableDataPage as SharedTableDataPage } from '@smartq/contracts';
 import { requestJson } from '../../shared/api/apiClient';
 
 export type DataSource = {
@@ -34,6 +35,8 @@ export type TablePreview = {
   rows: Array<Record<string, unknown>>;
   limit: number;
 };
+
+export type TableDataPage = SharedTableDataPage;
 
 export type CreatedResource = {
   id: string;
@@ -81,6 +84,13 @@ export const dataSourceApi = {
   previewTable(id: string, tableName: string) {
     return requestJson<TablePreview>(
       `/api/data-sources/${id}/tables/${encodeURIComponent(tableName)}/preview?limit=20`,
+    );
+  },
+
+  getTableDataPage(id: string, tableName: string, page: number, pageSize = 20) {
+    const query = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
+    return requestJson<TableDataPage>(
+      `/api/data-sources/${id}/tables/${encodeURIComponent(tableName)}/rows?${query.toString()}`,
     );
   },
 

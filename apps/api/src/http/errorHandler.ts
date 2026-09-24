@@ -13,6 +13,18 @@ export const errorHandler: ErrorRequestHandler = (error: unknown, _request, resp
     return;
   }
 
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'type' in error &&
+    error.type === 'entity.too.large'
+  ) {
+    response.status(413).json({
+      error: { code: 'IMPORT_FILE_TOO_LARGE', message: '文件超过 10 MiB，请压缩或拆分后重试。' },
+    });
+    return;
+  }
+
   response.status(500).json({
     error: { code: 'INTERNAL_ERROR', message: '服务暂时不可用，请稍后重试' },
   });

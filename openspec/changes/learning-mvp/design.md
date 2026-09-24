@@ -2,7 +2,7 @@
 
 ## 文档状态与读者
 
-**状态：首轮技术设计已评审通过并进入实现；尚未决议的“资源配置变更后旧会话如何处理”应在对话功能开发前确认。** 产品行为以 `docs/PRD.md` 和本变更下的三份规格为准；本文件说明这些行为如何映射到页面、接口、状态和持久化结构。若实现时需要改变可观察行为，先更新规格再改代码。
+**状态：首轮技术设计已评审通过并进入实现。** 产品行为以 `docs/PRD.md` 和本变更下的规格为准；本文件说明这些行为如何映射到页面、接口、状态和持久化结构。若实现时需要改变可观察行为，先更新规格再改代码。
 
 面向三类接手者：
 
@@ -135,13 +135,13 @@ data/                         本地 SQLite；不提交到版本库
 
 ### 3.1 页面路由
 
-| 页面路由                       | 主要用户 | 页面目标                                                       |
-| ------------------------------ | -------- | -------------------------------------------------------------- |
-| `/ask`                         | 问数用户 | 选择资源、创建会话、查看推荐问题和开始提问                     |
-| `/ask/:conversationId`         | 问数用户 | 查看历史消息、继续当前资源会话、回答澄清                       |
-| `/admin/data-source`           | 管理员   | 新建/测试 MySQL 连接、查看表结构和有界样例                     |
-| `/admin/resources/:resourceId` | 管理员   | 配置单表字段语义、业务术语、推荐问题；在同页调试样例问题并发布 |
-| `/admin/model`                 | 管理员   | 配置模型服务、测试连接、保存默认模型                           |
+| 页面路由               | 主要用户 | 页面目标                                                                                       |
+| ---------------------- | -------- | ---------------------------------------------------------------------------------------------- |
+| `/ask`                 | 问数用户 | 选择资源、创建会话、查看推荐问题和开始提问                                                     |
+| `/ask/:conversationId` | 问数用户 | 查看历史消息、继续当前资源会话、回答澄清                                                       |
+| `/admin/data-source`   | 管理员   | 新建/测试 MySQL 连接、查看表结构和有界样例                                                     |
+| `/admin/resources`     | 管理员   | 按表格浏览问数资源；从操作列打开配置抽屉，配置字段语义、业务术语、推荐问题，调试样例问题并发布 |
+| `/admin/model`         | 管理员   | 配置模型服务、测试连接、保存默认模型                                                           |
 
 全局顶部提供“管理员 / 问数用户”切换器。切换只改变路由和页面入口，不隐藏后端接口、不作为授权检查。初次打开进入 `/ask`；没有已发布资源时显示空状态及管理员入口。
 
@@ -152,14 +152,16 @@ data/                         本地 SQLite；不提交到版本库
 1. 连接表单：主机、端口、数据库名、用户名、密码。密码输入使用密码框；已保存连接只返回 `passwordConfigured` 和掩码，不返回明文。
 2. “测试连接”：发送当前未保存表单。测试成功显示 MySQL 版本和可浏览状态；失败保留输入并显示安全错误文案。
 3. “保存连接”：管理员先测试表单，后端保存时还会用同一组参数再次连接验证，避免表单测试成功后连接信息已变化；验证成功后才保存为 `ready`。当前产品只支持一个有效连接；保存另一个配置时更新当前数据源，而不是展示多连接管理器。
-4. 表清单：显示表名、备注、字段数量。点选表后展示字段名、MySQL 类型、是否可空和最多 20 行预览。
+4. 表清单：显示表名、备注、字段数量。点选表后展示字段名、MySQL 类型、是否可空和最多 20 行样例预览；点击“查看完整数据”打开表格抽屉，支持查看总记录数并按页浏览整张表，每页最多向页面返回 20 行。
 5. “创建问数资源”：输入资源显示名后创建草稿并跳转至资源配置页。
 
-页面状态至少有 `未配置`、`测试中`、`测试成功`、`测试失败`、`保存中`、`读取表清单中`、`无可用表`。退出页面或切换角色不把表单中的密码写入浏览器持久化存储。
+页面状态至少有 `未配置`、`测试中`、`测试成功`、`测试失败`、`保存中`、`读取表清单中`、`完整数据读取中`、`完整数据读取失败`、`无可用表`。退出页面或切换角色不把表单中的密码写入浏览器持久化存储。
 
 ### 3.3 管理员：问数资源配置页面
 
-页面由“资源信息、字段配置、业务术语、推荐问题、样例调试、结构检查”几个面板组成；不建设多层级资源目录。
+页面主体为问数资源表格，每个资源占一行，展示资源名称、来源表、数据源、字段数、状态和创建时间；表格行操作提供“配置”入口。点击后在右侧配置抽屉中加载该资源，不离开资源列表页面。数据源页面创建资源并导航到本页时，自动打开新资源的配置抽屉。不建设多层级资源目录。
+
+配置抽屉由“资源信息、字段配置、业务术语、推荐问题、样例调试、结构检查”几个面板组成，继续复用本节下述配置能力。抽屉宽度应容纳现有双列字段编辑；内容超过抽屉可视区域时仅抽屉正文滚动。资源列表页固定在应用视口内，表格数据区自行滚动，不产生页面级滚动条。
 
 - 资源信息：显示资源名、MySQL 数据库/表名、资源状态 `draft/active/needs_review` 和结构刷新时间。
 - 字段配置表：每行一个字段；列包括原始列名、MySQL 类型、展示名、业务说明、语义角色、是否可问、单位、默认聚合、同义词。
@@ -240,7 +242,7 @@ Express 按四层组织。路由只处理 HTTP、SSE 和共享 schema 校验，�
 
 关键职责分工：
 
-- `MysqlAdapter` 负责打开短期测试连接、列举表/字段、有限预览、只读查询和资源结构刷新；接收业务层生成的已校验查询，不接收任意 SQL 字符串。
+- `MysqlAdapter` 负责打开短期测试连接、列举表/字段、有限预览、分页只读浏览、只读问数查询和资源结构刷新；接收业务层生成的已校验查询，不接收任意 SQL 字符串。
 - `QwenAdapter` 负责向配置的百炼 OpenAI 兼容地址发送 Chat Completions 请求、超时/取消和 provider 错误归一化；不决定资源权限，也不执行 SQL。
 - `PlanValidator` 根据资源状态、字段 `enabled`、角色、类型、聚合和过滤操作符校验模型输出；不信任模型自称“已校验”。
 - `SqlCompiler` 只接受通过 validator 的内部查询计划，将字段 ID 映射为 introspection 存储的实际列名；所有值生成独立参数数组。
@@ -273,11 +275,11 @@ Express 按四层组织。路由只处理 HTTP、SSE 和共享 schema 校验，�
 **问数用户完成一轮提问：**
 
 1. 工作台调用 `GET /api/resources?status=active` 展示资源；创建会话时调用 `POST /api/conversations`，打开已有会话时调用 `GET /api/conversations/:id`。
-2. 每次提交问题或澄清回答都生成新的 `requestId`，调用 `POST /api/conversations/:id/turns`。接口先校验并建立 SSE 响应，然后依次发送 `turn.started`、`stage`、可选的 `clarification.required`、`result` 或 `error`，最后发送 `turn.completed` 并关闭流。
+2. 每次提交问题或澄清回答都生成新的 `requestId`，调用 `POST /api/conversations/:id/turns`。接口先校验并建立 SSE 响应，发送 `turn.started` 和当前粗粒度 `stage`；实际处理过程中按阶段发送 `progress(started/completed)`，结束时发送 `clarification.required`、`result` 或 `error`，最后发送 `turn.completed` 并关闭流。
 3. 初次提问遇到澄清时，服务端保存原问题、澄清问题与选项，以 `awaiting_clarification` 结束该次流。用户选择选项或填写自由文本后，用同一 `turnId`、新的 `requestId` 和原 `clarificationId` 再次 POST；服务端把原问题、澄清问题和已确认答案重新交给模型规划，取得最终计划并校验，之后才可执行。
 4. 用户主动取消调用 `DELETE /api/conversations/:id/turns/:turnId`；导航离开造成的 reader 中止不会调用取消接口，服务端将未完成轮次记为 `interrupted`。
 
-单轮正常查询的事件顺序是 `turn.started → stage(understanding) → stage(executing) → result → turn.completed(succeeded|empty)`；需要澄清时是 `turn.started → stage(understanding) → clarification.required → turn.completed(awaiting_clarification)`。错误在流建立后用 `error → turn.completed(failed)` 返回；输入/会话校验失败则在流建立前用普通 HTTP 错误返回。
+单轮正常查询的事件顺序包含 `turn.started → stage(understanding) → progress(resource_context) → progress(planning) → progress(validation) → progress(compilation) → stage(executing) → progress(query) → progress(presentation) → result → turn.completed(succeeded|empty)`；需要澄清时在计划校验后发送 `clarification.required → turn.completed(awaiting_clarification)`，不执行 SQL。错误在流建立后用 `error → turn.completed(failed)` 返回；输入/会话校验失败则在流建立前用普通 HTTP 错误返回。每个 progress 阶段各有 started/completed 两个事件，步骤编号在当前请求内递增；若阶段失败，只保存此前已完成阶段以及该阶段未完成的说明。
 
 ## 7. REST API 契约
 
@@ -390,6 +392,24 @@ Express 按四层组织。路由只处理 HTTP、SSE 和共享 schema 校验，�
 }
 ```
 
+#### `GET /api/data-sources/:dataSourceId/tables/:tableName/rows?page=1&pageSize=20`
+
+用于完整浏览已选数据表。仅允许从当前数据源 schema 中查到的基础表；服务端将 `page` 校验为正整数，并将 `pageSize` 限制在 `1..20`。每次请求只返回当前页的数据，并附带总记录数和总页数。列标识符来自服务端 schema introspection 并经过引用；页码和页大小使用参数绑定计算偏移量。表有主键时按主键排序，便于连续翻页。响应：
+
+```json
+{
+  "tableName": "orders",
+  "columns": [{ "name": "order_date", "mysqlType": "datetime", "nullable": false }],
+  "rows": [{ "order_date": "2026-01-02 12:30:00" }],
+  "page": 1,
+  "pageSize": 20,
+  "totalRows": 125,
+  "totalPages": 7
+}
+```
+
+页面使用表格内分页控件浏览，不增加页面级滚动条。查询只使用数据源配置中的只读账号，不提供任何写入接口。
+
 ### 7.4 问数资源接口
 
 #### `GET /api/resources?status=active`
@@ -479,21 +499,21 @@ Express 按四层组织。路由只处理 HTTP、SSE 和共享 schema 校验，�
 
 #### `POST /api/resources/:resourceId/plan-preview`
 
-用真实模型和当前资源配置解析管理员输入的样例问题，但不执行 SQL、不创建正式会话、不保存查询结果。允许 `draft` 和 `active` 资源，但资源结构必须是最新状态；使用与正式查询相同的字段/类型/聚合校验，不执行“资源必须 active”这一执行门禁。请求 `{ "question": "今年各城市销售额怎么样" }`；响应 `{ "kind": "query|clarify", "plan": {}, "validation": { "valid": true, "errors": [] } }`，其中 `plan` 是第 8.2 节定义的计划联合类型，`errors` 元素结构为 `{ "code", "path", "message" }`。对于澄清计划，`valid` 表示澄清问题和选项结构合法；不生成候选查询计划。计划不合规以 `validation.valid=false` 返回；模型配置或网络错误才返回 API error。
+用真实模型和资源配置页当前表单中的配置解析管理员输入的样例问题，但不保存配置、不执行 SQL、不创建正式会话、不保存查询结果。允许 `draft` 和 `active` 资源，但资源结构必须是最新状态；服务端先刷新 MySQL 表结构摘要，发现变化或资源待复核时暂停预览。字段配置先按当前数据库字段 ID 和现有配置规则校验，再使用与正式查询相同的计划校验；不执行“资源必须 active”这一执行门禁。请求 `{ "question": "今年各城市销售额怎么样", "configuration": { ... } }`，其中 `configuration` 使用 `ResourceConfigurationInput`，让调试结果对应页面上尚未保存的修改。响应 `{ "kind": "query|clarify|reject|invalid", "plan": {}, "validation": { "valid": true, "errors": [] } }`，`plan` 是第 8.2 节定义的联合类型；错误元素为 `{ "code", "path", "message" }`。澄清计划和拒绝计划的结构合法时 `valid=true`；计划语义违规时保留计划并返回 `valid=false`；模型输出无法解析或不符合结构时返回 `kind=invalid`、`plan=null` 和可读校验错误。模型配置缺失、密钥无法解密、模型超时或服务不可用返回 API error，错误正文不得包含密钥或 provider 原文。
 
 ### 7.5 模型接口
 
 #### `GET /api/models/config`
 
-返回单个默认模型配置。不存在配置时返回 `{ "configured": false, "enabled": false, "apiKeyConfigured": false }`；存在时返回 `{ "configured": true, "provider": "bailian-openai-compatible", "baseUrl": "...", "modelId": "...", "enabled": true, "apiKeyConfigured": true, "apiKeyMasked": "••••••••", "lastTestAt": "..." }`。不返回密钥或密文。
+返回单个默认模型配置。不存在配置时返回 `{ "configured": false, "enabled": false, "apiKeyConfigured": false }`；存在时返回 `{ "configured": true, "provider": "bailian-openai-compatible", "baseUrl": "...", "modelId": "...", "enabled": true, "apiKeyConfigured": true, "apiKeyMasked": "••••••••", "lastTestAt": "..." }`。不返回密钥或密文。首次配置表单默认值为百炼共享地址 `https://dashscope.aliyuncs.com/compatible-mode/v1` 和模型 `qwen-plus`；两者均可编辑。Base URL 按 `{BaseURL}/chat/completions` 发送 OpenAI 兼容请求。
 
 #### `PUT /api/models/config`
 
-保存 Base URL、模型 ID 和 Key。`apiKey` 缺省表示沿用已保存 Key；`clearApiKey: true` 显式删除密钥；同时传入二者为 `400 INVALID_SECRET_OPERATION`。没有已配置 Key 时不能启用模型。若 `enabled=true`，服务端必须用待保存的完整配置实际调用一次模型；调用成功后才原子保存并启用，失败不覆盖现有默认配置并返回 `503 MODEL_UNAVAILABLE`。`lastTestAt` 记录这次服务端验证时间。
+请求 `{ "baseUrl": "https://.../compatible-mode/v1", "modelId": "qwen-plus", "apiKey": "可选的新密钥" }`。`apiKey` 缺省表示沿用已保存密钥；首次配置必须提供密钥。本期不提供清除密钥或停用默认模型的操作。服务端使用待保存的完整配置重新调用模型；调用成功后才原子保存并启用，失败不覆盖现有默认配置。成功响应与 `GET /api/models/config` 一致。密钥使用现有 `SMARTQ_ENCRYPTION_KEY` 通过 AES-256-GCM 加密；持久化只保存密文、随机 IV 和认证标签。
 
 #### `POST /api/models/test`
 
-对表单值做一次短文本 Chat Completions 调用，不持久化配置或测试文本。请求为 `{ "baseUrl": "https://...", "modelId": "qwen-plus", "apiKey": "..." }`；若未提交 `apiKey`，可显式传 `useSavedKey=true` 使用已保存密钥，二者不可同时出现。只允许 `https`；本地兼容测试服务可用 `http`，且 host 必须是 loopback。成功 `{ "ok": true, "modelId": "qwen-plus", "latencyMs": 650 }`。任何错误都不得返回请求中的 Key 或完整 provider body。测试通过是给管理员即时反馈；启用配置时 `PUT` 仍会在服务端重新验证。
+对表单值做一次短文本 Chat Completions 调用，不持久化配置或测试文本。请求为 `{ "baseUrl": "https://...", "modelId": "qwen-plus", "apiKey": "..." }`；若未提交 `apiKey`，必须显式传 `useSavedKey=true` 使用已保存密钥，二者不可同时出现。只允许 `https`；本地兼容测试服务可用 `http`，且 host 必须是 loopback。成功响应 `{ "success": true, "modelId": "qwen-plus", "responseTimeMs": 650 }`。任何错误都不得返回请求中的 Key 或完整 provider body。提供商调用设置 15 秒超时；401/403、404、429 和连接失败转换为不包含响应正文的中文提示。测试通过是给管理员即时反馈；`PUT` 仍会在服务端重新验证。
 
 ### 7.6 会话接口
 
@@ -504,6 +524,8 @@ Express 按四层组织。路由只处理 HTTP、SSE 和共享 schema 校验，�
 #### `POST /api/conversations`
 
 创建一个固定到已发布资源的新会话。请求 `{ "resourceId": "uuid", "title": null }`。标题在第一轮问题后从用户问题截取前 30 个字符；用户可开始提问前不要求手动命名。
+
+会话保存创建时资源配置的摘要指纹。管理员修改并重新发布资源后，旧会话仍可查看历史消息，但继续提问时返回 `409 RESOURCE_CONFIGURATION_CHANGED`，提示用户新建会话，以免用新配置解释旧会话上下文。资源表结构变化仍按 `needs_review` 规则暂停所有新查询。
 
 #### `GET /api/conversations/:conversationId`
 
@@ -553,19 +575,23 @@ Express 按四层组织。路由只处理 HTTP、SSE 和共享 schema 校验，�
 
 计划使用 `version=1`，由 `packages/contracts` 中共享的 Zod discriminated union 校验。模型不能返回物理表名、物理列名、SQL 片段、任意函数名、原始 `WHERE/GROUP BY` 或任意表达式。`kind=query` 的完整字段约定如下：
 
-| 字段         | 类型                                                                                            | 约束                                                              |
-| ------------ | ----------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| `version`    | 字面值 `1`                                                                                      | 必填                                                              |
-| `kind`       | `query` 或 `clarify`                                                                            | 必填；由判别联合区分                                              |
-| `metrics`    | `{fieldId: UUID, aggregation: sum/avg/count/min/max}[]`                                         | 查询计划必填 1–3 项；字段必须是已启用指标                         |
-| `dimensions` | `{fieldId: UUID, bucket?: day/month}[]`                                                         | 0–2 项；`bucket` 仅用于日期类型维度                               |
-| `timeRange`  | `{fieldId: UUID, startInclusive: ISO日期或日期时间, endExclusive: ISO日期或日期时间}` 或 `null` | 可选；字段必须是日期/时间字段，格式须与字段类型匹配，起始早于结束 |
-| `filters`    | `{fieldId: UUID, operator, value?}[]`                                                           | 0–8 项；操作符和值受字段类型约束；仅 AND                          |
-| `sort`       | `{target: {kind: metric/dimension, index: 0-based整数}, direction: asc/desc}[]`                 | 0–2 项；index 必须指向当前计划中的项                              |
-| `limit`      | 整数                                                                                            | 可选，1–200；省略时服务端填 50                                    |
-| `chartHint`  | `table/metric/bar/line`                                                                         | 可选；仅呈现建议，不影响 SQL                                      |
+| 字段         | 类型                                                                                                      | 约束                                                                                               |
+| ------------ | --------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `version`    | 字面值 `1`                                                                                                | 必填                                                                                               |
+| `kind`       | `query`、`clarify` 或 `reject`                                                                            | 必填；由判别联合区分                                                                               |
+| `measure`    | `{kind: "named", metricId: UUID}` 或 `{kind: "field", fieldId: UUID, aggregation: sum/avg/count/min/max}` | 必填且只能有一个；命名指标使用管理员配置的聚合和固定过滤；字段聚合只能使用已启用指标字段及兼容聚合 |
+| `dimensions` | `{fieldId: UUID, bucket?: day/month}[]`                                                                   | 0–2 项；字段须为已启用维度；`bucket` 仅用于日期类型维度                                            |
+| `timeRange`  | `{fieldId: UUID, startInclusive: ISO日期或日期时间, endExclusive: ISO日期或日期时间}` 或 `null`           | 可选；字段必须是日期/时间字段，格式须与字段类型匹配，起始早于结束                                  |
+| `filters`    | `{fieldId, operator, value? 或 values?}[]`                                                                | 0–8 项；单值操作符用 `value`，`between/in` 用 `values`；仅 AND                                     |
+| `sort`       | `{target: {kind: measure/dimension, index: 0-based整数}, direction: asc/desc}[]`                          | 0–2 项；index 必须指向当前计划中的项                                                               |
+| `limit`      | 整数                                                                                                      | 可选，1–200；省略时服务端填 50                                                                     |
+| `chartHint`  | `table/metric/bar/line`                                                                                   | 可选；仅呈现建议，不影响 SQL                                                                       |
 
 澄清计划结构为 `{version: 1, kind: "clarify", question: string, options: {id, label}[], allowFreeText: boolean}`。`question` 最长 300 字；选项为 2–4 个，`id` 在当前澄清内唯一，`label` 最长 80 字。服务端保存原问题、澄清问题和选项；前端只提交 `clarificationId` 与 `optionId` 或自由文本。服务端查出对应选项的 label，把它作为已确认答案连同原问题、澄清问题再次送入规划器；自由文本按同样路径处理。确认前不执行 SQL，用户回答不得直接拼进 SQL 条件。
+
+模型可返回拒绝计划 `{version: 1, kind: "reject", code: "METRIC_RULE_CONFLICT" | "UNSUPPORTED_REQUEST", message: string}`。当问题要求改变命名指标的固定口径时必须拒绝并说明可改问底层字段；服务端仍会检查命名指标 ID、字段权限和计划过滤条件，若查询过滤与命名指标固定条件冲突则拒绝该计划，不允许以开放字段聚合绕过被明确提及的命名指标。
+
+`plan-preview` 响应中的 `resourceMap` 提供字段 ID 到展示名/物理列名的映射，以及命名指标 ID、指标字段名、聚合方式和固定条件，供管理员核对模型计划；它只面向配置页面，不作为模型输出或后续查询请求的可信输入。计划校验错误使用 `{code, path, message}`；`kind=clarify/reject` 表示模型给出了合法的非执行结果，`kind=invalid` 表示模型 JSON 或计划结构不合法。
 
 正常查询计划示例：
 
@@ -573,7 +599,7 @@ Express 按四层组织。路由只处理 HTTP、SSE 和共享 schema 校验，�
 {
   "version": 1,
   "kind": "query",
-  "metrics": [{ "fieldId": "field-amount-uuid", "aggregation": "sum" }],
+  "measure": { "kind": "named", "metricId": "metric-sales-uuid" },
   "dimensions": [{ "fieldId": "field-city-uuid" }],
   "timeRange": {
     "fieldId": "field-order-date-uuid",
@@ -581,7 +607,7 @@ Express 按四层组织。路由只处理 HTTP、SSE 和共享 schema 校验，�
     "endExclusive": "2027-01-01"
   },
   "filters": [],
-  "sort": [{ "target": { "kind": "metric", "index": 0 }, "direction": "desc" }],
+  "sort": [{ "target": { "kind": "measure", "index": 0 }, "direction": "desc" }],
   "limit": 20,
   "chartHint": "bar"
 }
@@ -606,31 +632,31 @@ Express 按四层组织。路由只处理 HTTP、SSE 和共享 schema 校验，�
 
 ### 8.3 字段和操作符允许范围
 
-| 计划部分              | 允许值/上限                      | 校验规则                                                                   |
-| --------------------- | -------------------------------- | -------------------------------------------------------------------------- |
-| `metrics`             | 1–3 项                           | 字段必须为启用指标；聚合必须是字段配置允许值                               |
-| `dimensions`          | 0–2 项                           | 字段必须为启用维度；同字段不得重复                                         |
-| `timeRange`           | 可选 1 项                        | 字段 MySQL 类型必须为 date/datetime/timestamp；区间左闭右开                |
-| `filters`             | 0–8 项，仅 AND                   | 操作符按类型约束；`in` 最多 20 个值；字符串 `contains` 需转义 `%` 与 `_`   |
-| 数值操作符            | `eq/ne/gt/gte/lt/lte/between/in` | 字段必须为可问的数值或日期字段，值必须通过类型校验                         |
-| 文本操作符            | `eq/ne/in/contains`              | 值字符串长度最多 200；不接受 SQL 通配表达式                                |
-| 空值操作符            | `is_null/is_not_null`            | 不带 value                                                                 |
-| `sort`                | 0–2 项                           | 目标只能是计划中的指标或维度；方向只能 `asc/desc`                          |
-| `limit`               | 1–200，默认 50                   | 服务端再执行 `min(plan.limit, 200)`                                        |
-| `chartHint`           | `table/metric/bar/line`          | 仅为提示；前端还须按列结构判定图表是否可用                                 |
-| `dimensions[].bucket` | `day/month`                      | 仅用于已选日期维度；MySQL 表达式由编译器固定生成；未提供时按原始日期值分组 |
+| 计划部分              | 允许值/上限                      | 校验规则                                                                                           |
+| --------------------- | -------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `measure`             | 恰好 1 项                        | 命名指标必须属于当前资源；开放字段聚合须为已启用指标字段且类型兼容                                 |
+| `dimensions`          | 0–2 项                           | 字段必须为启用维度；同字段不得重复                                                                 |
+| `timeRange`           | 可选 1 项                        | 字段 MySQL 类型必须为 date/datetime/timestamp；区间左闭右开                                        |
+| `filters`             | 0–8 项，仅 AND                   | 操作符按类型约束；`in` 最多 20 个值；字符串 `contains` 需转义 `%` 与 `_`；不得覆盖命名指标固定口径 |
+| 数值和日期操作符      | `eq/ne/gt/gte/lt/lte/between/in` | 字段必须为可问的数值或日期字段，值必须通过类型校验                                                 |
+| 文本操作符            | `eq/ne/in/contains`              | 值字符串长度最多 200；不接受 SQL 通配表达式                                                        |
+| 空值操作符            | `is_null/is_not_null`            | 不带 value                                                                                         |
+| `sort`                | 0–2 项                           | 目标只能是唯一指标或计划中的维度；方向只能 `asc/desc`                                              |
+| `limit`               | 1–200，默认 50                   | 服务端再执行 `min(plan.limit, 200)`                                                                |
+| `chartHint`           | `table/metric/bar/line`          | 仅为提示；前端还须按列结构判定图表是否可用                                                         |
+| `dimensions[].bucket` | `day/month`                      | 仅用于已选日期维度；MySQL 表达式由编译器固定生成；未提供时按原始日期值分组                         |
 
 表达“今年”等相对日期时，由服务端以 `SMARTQ_DEMO_DATE` 为基准日期（未配置时读取真实当前日期），并提供 `Asia/Shanghai` 时区给模型；日期区间统一为左闭右开。模型仍须返回实际 ISO 日期，服务端不执行模型返回的日期表达式。合成订单种子数据同样以该演示日期为基准，便于重复演示。
 
 ### 8.4 校验顺序和错误类型
 
-1. JSON 可解析且通过 `QueryPlanSchema`。
+1. JSON 可解析且通过 `QueryPlanSchema`；无法解析或结构不合规的模型输出作为 `kind=invalid` 返回，不执行后续步骤。
 2. 资源存在且 schema 未待复核；正式执行要求资源 `active`，计划预览允许 `draft` 或 `active`。
 3. 所有 fieldId 属于当前资源且 `enabled=true`。
-4. 指标、维度、聚合、日期、操作符、排序和 limit 相互匹配。
+4. 唯一指标、维度、聚合、日期、操作符、排序和 limit 相互匹配；命名指标固定过滤由服务端配置注入并校验，模型不能改写。
 5. 每个值的类型、长度、范围合法；过滤值均转换为参数，不拼接进 SQL。
 6. 澄清问题和选项结构有效、选项 ID 不重复；确认回答后的新计划重新走完整校验。
-7. 执行用例要求资源 `active` 且结构 hash 最新；计划预览用例允许 `draft/active`，但仍校验 schema 和字段配置。通过后只有执行用例才调用 `SqlCompiler`；任一步失败都记录 `query_runs.status=rejected`，不触碰业务库。
+7. 执行用例要求资源 `active` 且结构 hash 最新；计划预览用例允许 `draft/active`，但仍校验 schema 和字段配置。预览接受页面当前配置作为未持久化输入，并先按数据库字段 ID 和配置规则验证。通过后只有执行用例才调用 `SqlCompiler`；任一步失败都记录 `query_runs.status=rejected`，不触碰业务库。
 
 校验错误使用固定代码，如 `RESOURCE_NOT_ACTIVE`、`FIELD_NOT_ALLOWED`、`AGGREGATION_NOT_ALLOWED`、`FILTER_TYPE_MISMATCH`、`PLAN_LIMIT_EXCEEDED`。模型无法理解问题但计划结构合法时使用澄清，不把所有语义不确定都当作 500 错误。
 
@@ -671,16 +697,19 @@ data: {"type":"stage","conversationId":"uuid","turnId":"uuid","requestId":"uuid"
 
 所有事件 JSON 都有公共字段 `{type, conversationId, turnId, requestId}`；下表列出事件专属字段。
 
-| 事件                     | 专属数据结构                                                       | 前端行为                                                                                            |
-| ------------------------ | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------- |
-| `turn.started`           | `{isContinuation: boolean}`                                        | 建立或恢复逻辑轮次；初次问题用于确认/补齐乐观消息，澄清回答作为单独用户消息处理，不重复追加原始问题 |
-| `stage`                  | `{stage: "understanding"                                           | "executing"}`                                                                                       | 更新进度提示 |
-| `clarification.required` | `{clarificationId, question, options:[{id,label}], allowFreeText}` | 保存待澄清状态；显示选项；本轮不显示 SQL/结果                                                       |
-| `result`                 | 下节规定的完整结果载荷                                             | 追加助手结果消息；渲染查询条件、SQL、表格和图表                                                     |
-| `error`                  | `{code, stage, message, retryable}`                                | 更新失败状态；保留用户问题；显示修正建议                                                            |
-| `turn.completed`         | `{status: "awaiting_clarification"                                 | "succeeded"                                                                                         | "empty"      | "failed" | "cancelled"}` | 结束当前流；澄清状态显示选项/专用回答框，其他终态恢复问题输入框 |
+| 事件                     | 专属数据结构                                                                                                                                    | 前端行为                                                                                            |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `turn.started`           | `{isContinuation: boolean}`                                                                                                                     | 建立或恢复逻辑轮次；初次问题用于确认/补齐乐观消息，澄清回答作为单独用户消息处理，不重复追加原始问题 |
+| `stage`                  | `{stage: "understanding"                                                                                                                        | "executing"}`                                                                                       | 更新进度提示 |
+| `progress`               | `{step, phase, status, message}`；phase 为 `resource_context/planning/validation/compilation/query/presentation`；status 为 `started/completed` | 按序更新当前轮次的“问数过程”面板；活动阶段显示处理中，已完成阶段显示完成                            |
+| `clarification.required` | `{clarificationId, question, options:[{id,label}], allowFreeText, processSteps}`                                                                | 保存待澄清状态和过程记录；显示选项；本轮不显示 SQL/结果                                             |
+| `result`                 | 下节规定的完整结果载荷                                                                                                                          | 追加助手结果消息；渲染查询条件、SQL、表格和图表                                                     |
+| `error`                  | `{code, stage, message, retryable, processSteps}`                                                                                               | 更新失败状态；保留用户问题和过程记录；显示修正建议                                                  |
+| `turn.completed`         | `{status: "awaiting_clarification"                                                                                                              | "succeeded"                                                                                         | "empty"      | "failed" | "cancelled"}` | 结束当前流；澄清状态显示选项/专用回答框，其他终态恢复问题输入框 |
 
 服务端收到澄清计划时，把 `clarificationId`、问题和选项保存为一条 `role=assistant, kind=clarification` 消息；`query_runs.clarification_json` 保存原问题、澄清问题和选项，用于回答后的再次规划。用户回答作为 `role=user, kind=clarification` 消息另存。重新打开会话时，前端可从消息恢复待澄清 UI。
+
+`progress` 在每个处理阶段开始和完成时各发送一条真实的系统状态；一对事件使用同一 `step`，新阶段的编号在当前请求内从 1 递增。阶段说明由服务端固定模板生成；计划通过校验后，可根据校验后的计划补充指标、维度和时间范围摘要。不得把模型的隐藏推理文本当作进度内容，也不得为了营造流式效果伪造逐字输出。结果载荷以及澄清、错误消息均持久化本轮已发送的 `processSteps`。活动请求期间前端展开过程列表并显示当前状态；收到结果、澄清或错误后，将过程记录放在对应消息内并默认折叠，用户可手动展开。打开历史会话时只展示已保存的完成步骤。
 
 结果事件示例：
 
@@ -740,18 +769,18 @@ data: {"type":"stage","conversationId":"uuid","turnId":"uuid","requestId":"uuid"
 
 SQLite 只保存 SmartQ 元数据、结构化对话和查询日志，不保存完整 MySQL 数据副本。UUID 以 `TEXT` 保存；JSON 以合法 JSON 字符串保存；时间为 ISO 8601 UTC `TEXT`；布尔值用带 `CHECK (value IN (0,1))` 的 `INTEGER`。SQLite 打开后启用 `foreign_keys=ON` 与 WAL。迁移使用有序 SQL 文件，并在事务中记录 `schema_migrations`。
 
-| 表                      | 关键字段                                                                                                                                                                                                                                                                                                | 用途/约束                                                                                                                                                                                                                                                                                                        |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `schema_migrations`     | `version PK`, `applied_at`                                                                                                                                                                                                                                                                              | 记录已执行迁移                                                                                                                                                                                                                                                                                                   |
-| `data_sources`          | `id PK`, `singleton_key UNIQUE`, `name`, `host`, `port`, `database_name`, `username`, `password_ciphertext`, `password_iv`, `password_tag`, `status`, `last_tested_at`                                                                                                                                  | `singleton_key` 固定为 `default`，保证最多一条配置；密码只存 AES-GCM 密文                                                                                                                                                                                                                                        |
-| `resources`             | `id PK`, `data_source_id FK`, `table_name`, `display_name`, `description`, `status`, `schema_hash`, `schema_snapshot_json`, `created_at`, `updated_at`                                                                                                                                                  | 唯一约束 `(data_source_id, table_name)`；状态 `draft/active/needs_review`                                                                                                                                                                                                                                        |
-| `resource_fields`       | `id PK`, `resource_id FK`, `column_name`, `display_name`, `description`, `mysql_type`, `semantic_role`, `enabled`, `unit`, `default_aggregation`, `allowed_aggregations_json`, `synonyms_json`, `ordinal`, `removed_at`                                                                                 | 物理列名来自 schema；`semantic_role` 为 `dimension/metric/hidden`                                                                                                                                                                                                                                                |
-| `business_terms`        | `id PK`, `resource_id FK`, `term`, `definition`, `synonyms_json`, `target_field_id FK NULL`                                                                                                                                                                                                             | 资源内术语；`term` 在同资源中唯一                                                                                                                                                                                                                                                                                |
-| `recommended_questions` | `id PK`, `resource_id FK`, `question`, `sort_order`                                                                                                                                                                                                                                                     | 每资源最多 4 条                                                                                                                                                                                                                                                                                                  |
-| `model_configs`         | `id PK`, `singleton_key UNIQUE`, `provider`, `base_url`, `model_id`, `api_key_ciphertext`, `api_key_iv`, `api_key_tag`, `enabled`, `last_test_at`                                                                                                                                                       | `singleton_key` 固定为 `default`；不得提供读取密钥的 repository 方法                                                                                                                                                                                                                                             |
-| `conversations`         | `id PK`, `resource_id FK`, `title`, `created_at`, `updated_at`                                                                                                                                                                                                                                          | 会话固定关联一个资源                                                                                                                                                                                                                                                                                             |
-| `messages`              | `id PK`, `conversation_id FK`, `turn_id`, `role`, `kind`, `content_json`, `created_at`                                                                                                                                                                                                                  | `role=user/assistant`；kind 区分 question、clarification、answer、error                                                                                                                                                                                                                                          |
-| `query_runs`            | `id PK`, `conversation_id FK`, `turn_id`, `parent_run_id FK NULL`, `request_id`, `request_json`, `question`, `clarification_id UNIQUE NULL`, `status`, `plan_json`, `clarification_json`, `sql_text`, `row_count`, `truncated`, `duration_ms`, `error_code`, `error_stage`, `created_at`, `finished_at` | 每次 POST 建一条执行尝试；同轮澄清回答用相同 `turn_id`、新的 `request_id` 和指向上次尝试的 `parent_run_id`。`request_id` 在会话内唯一，用于请求去重；待答澄清只允许消费一次；不保存参数拼接后的 SQL；状态统一为 awaiting_clarification/executing/succeeded/empty/rejected/failed/cancelled/interrupted/continued |
+| 表                      | 关键字段                                                                                                                                                                                                                                                                                                               | 用途/约束                                                                                                                                                                                                                                                                                                        |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `schema_migrations`     | `version PK`, `applied_at`                                                                                                                                                                                                                                                                                             | 记录已执行迁移                                                                                                                                                                                                                                                                                                   |
+| `data_sources`          | `id PK`, `singleton_key UNIQUE`, `name`, `host`, `port`, `database_name`, `username`, `password_ciphertext`, `password_iv`, `password_tag`, `status`, `last_tested_at`                                                                                                                                                 | `singleton_key` 固定为 `default`，保证最多一条配置；密码只存 AES-GCM 密文                                                                                                                                                                                                                                        |
+| `resources`             | `id PK`, `data_source_id FK`, `table_name`, `display_name`, `description`, `status`, `schema_hash`, `schema_snapshot_json`, `created_at`, `updated_at`                                                                                                                                                                 | 唯一约束 `(data_source_id, table_name)`；状态 `draft/active/needs_review`                                                                                                                                                                                                                                        |
+| `resource_fields`       | `id PK`, `resource_id FK`, `column_name`, `display_name`, `description`, `mysql_type`, `semantic_role`, `enabled`, `unit`, `default_aggregation`, `allowed_aggregations_json`, `synonyms_json`, `ordinal`, `removed_at`                                                                                                | 物理列名来自 schema；`semantic_role` 为 `dimension/metric/hidden`                                                                                                                                                                                                                                                |
+| `business_terms`        | `id PK`, `resource_id FK`, `term`, `definition`, `synonyms_json`, `target_field_id FK NULL`                                                                                                                                                                                                                            | 资源内术语；`term` 在同资源中唯一                                                                                                                                                                                                                                                                                |
+| `recommended_questions` | `id PK`, `resource_id FK`, `question`, `sort_order`                                                                                                                                                                                                                                                                    | 每资源最多 4 条                                                                                                                                                                                                                                                                                                  |
+| `model_configs`         | `id PK`, `singleton_key UNIQUE`, `provider`, `base_url`, `model_id`, `api_key_ciphertext`, `api_key_iv`, `api_key_tag`, `enabled`, `last_test_at`                                                                                                                                                                      | `singleton_key` 固定为 `default`；不得提供读取密钥的 repository 方法                                                                                                                                                                                                                                             |
+| `conversations`         | `id PK`, `resource_id FK`, `resource_config_hash`, `title`, `created_at`, `updated_at`                                                                                                                                                                                                                                 | 会话固定关联资源及创建时的字段语义、指标和物理结构摘要                                                                                                                                                                                                                                                           |
+| `messages`              | `id PK`, `conversation_id FK`, `turn_id`, `role`, `kind`, `content_json`, `created_at`                                                                                                                                                                                                                                 | `role=user/assistant`；kind 区分 question、clarification、answer、error                                                                                                                                                                                                                                          |
+| `query_runs`            | `id PK`, `conversation_id FK`, `turn_id`, `parent_run_id FK NULL`, `request_id`, `request_json`, `question`, `clarification_id UNIQUE NULL`, `status`, `plan_json`, `clarification_json`, `sql_text`, `result_json`, `row_count`, `truncated`, `duration_ms`, `error_code`, `error_stage`, `created_at`, `finished_at` | 每次 POST 建一条执行尝试；同轮澄清回答用相同 `turn_id`、新的 `request_id` 和指向上次尝试的 `parent_run_id`。`request_id` 在会话内唯一，用于请求去重；待答澄清只允许消费一次；不保存参数拼接后的 SQL；状态统一为 awaiting_clarification/executing/succeeded/empty/rejected/failed/cancelled/interrupted/continued |
 
 持久化边界：数据库密码和模型 Key 通过统一 `SecretCipher` 加密；`messages.content_json` 保存用户问题和面向用户的结构化回答；不得保存模型请求中包含的密钥、MySQL 返回的未使用列或原始 provider 错误 body。字段配置中的 `allowedAggregations` 使用 JSON 数组持久化，不能只靠前端推导。
 
@@ -761,7 +790,7 @@ SQLite 只保存 SmartQ 元数据、结构化对话和查询日志，不保存�
 
 ### 11.1 AES-GCM 密钥处理
 
-- 主密钥从 `.env.local` 的 `SMARTQ_MASTER_KEY` 读取，使用 Base64 编码且解码后恰为 32 bytes。
+- 主密钥从 `.env.local` 的 `SMARTQ_ENCRYPTION_KEY` 读取，使用 64 位十六进制编码且解码后恰为 32 bytes。
 - AES-256-GCM 每次加密使用新的 12-byte IV；SQLite 分列保存 ciphertext、IV 和 16-byte auth tag。
 - 若 SQLite 中已有密文但主密钥缺失/错误，API 启动失败并说明需恢复原主密钥；不得悄悄覆写或丢弃密文。
 - 页面读取密钥状态只能得到 `configured/masked`；保存操作通过 HTTPS 不适用，本地 HTTP 仅绑定 `127.0.0.1`；项目不得把 `.env.local`、SQLite 文件或实际演示 Key 提交。

@@ -1,7 +1,10 @@
 import express from 'express';
 import { dataSourceRoutes } from './dataSourceRoutes.js';
+import { conversationRoutes } from './conversationRoutes.js';
 import { errorHandler } from './errorHandler.js';
+import { modelRoutes } from './modelRoutes.js';
 import { resourceRoutes } from './resourceRoutes.js';
+import { importRoutes } from './importRoutes.js';
 
 export function createApp() {
   const app = express();
@@ -16,7 +19,10 @@ export function createApp() {
     });
   });
   app.use('/api/data-sources', dataSourceRoutes);
+  app.use('/api/imports', importRoutes);
   app.use('/api/resources', resourceRoutes);
+  app.use('/api/models', modelRoutes);
+  app.use('/api/conversations', conversationRoutes);
   app.use(errorHandler);
   return app;
 }

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, Card, Dropdown, Layout, Menu, Typography } from 'antd';
+import { Button, Dropdown, Layout, Menu } from 'antd';
 import {
   AppstoreOutlined,
   BarChartOutlined,
@@ -8,10 +8,11 @@ import {
   ApiOutlined,
 } from '@ant-design/icons';
 import { DataSourcePage } from '../features/data-source/DataSourcePage';
+import { AskWorkspace } from '../features/chat/AskWorkspace';
+import { ModelConfigPage } from '../features/model/ModelConfigPage';
 import { ResourcePage } from '../features/resource/ResourcePage';
 
 const { Header, Sider, Content } = Layout;
-const { Paragraph, Title } = Typography;
 
 type PageId = 'ask' | 'data-source' | 'resource' | 'model';
 type DemoRole = 'admin' | 'asker';
@@ -83,9 +84,15 @@ export function AppShell() {
             </Button>
           </Dropdown>
         </Header>
-        <Content className="page-content">
+        <Content
+          className={`page-content${activePage === 'ask' ? ' page-content-ask' : ''}${
+            activePage === 'resource' ? ' page-content-resource' : ''
+          }`}
+        >
           {activePage === 'data-source' ? (
             <DataSourcePage onResourceCreated={handleResourceCreated} />
+          ) : activePage === 'ask' ? (
+            <AskWorkspace />
           ) : activePage === 'resource' ? (
             <ResourcePage
               initialResourceId={selectedResourceId}
@@ -94,19 +101,10 @@ export function AppShell() {
               }}
             />
           ) : (
-            <NotImplementedPage page={activePage} />
+            <ModelConfigPage />
           )}
         </Content>
       </Layout>
     </Layout>
-  );
-}
-
-function NotImplementedPage({ page }: { page: PageId }) {
-  return (
-    <Card className="placeholder-card">
-      <Title level={3}>{pageLabels[page]}</Title>
-      <Paragraph type="secondary">这个页面将在后续开发阶段接入。</Paragraph>
-    </Card>
   );
 }

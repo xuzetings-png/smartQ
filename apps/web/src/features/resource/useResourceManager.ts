@@ -12,22 +12,27 @@ export function useResourceManager(initialResourceId?: string) {
   const [busyOperation, setBusyOperation] = useState<ResourceOperation>('load');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const loadVersion = useRef(0);
+  const detailVersion = useRef(0);
 
   const loadDetail = useCallback(async (id: string) => {
+    const currentVersion = detailVersion.current + 1;
+    detailVersion.current = currentVersion;
+    const isCurrent = () => detailVersion.current === currentVersion;
     setBusyOperation('load');
     setErrorMessage(null);
+    setDetail(null);
     try {
       const resource = await resourceApi.get(id);
+      if (!isCurrent()) return;
       setDetail(resource);
       setSelectedResourceId(resource.id);
       setItems((current) =>
         current.map((item) => (item.id === resource.id ? toSummary(resource, item) : item)),
       );
     } catch (error) {
-      setDetail(null);
-      setErrorMessage(getErrorMessage(error, '读取资源详情失败'));
+      if (isCurrent()) setErrorMessage(getErrorMessage(error, '读取资源详情失败'));
     } finally {
-      setBusyOperation(null);
+      if (isCurrent()) setBusyOperation(null);
     }
   }, []);
 
