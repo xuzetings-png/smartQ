@@ -1,0 +1,9 @@
+#:schema https://developers.openai.com/codex/config-schema.json
+
+model = "gpt-6-luna"
+model_context_window = 1050000
+model_auto_compact_token_limit = 1000000
+model_auto_compact_token_limit_scope = "total"
+
+[features]
+context_management.experimental_mode = true

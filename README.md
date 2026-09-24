@@ -14,7 +14,7 @@ SmartQ 是用于学习和演示自然语言问数链路的本地项目。当前�
 cp .env.example .env.local
 ```
 
-编辑 `.env.local`，设置本机演示用的数据库密码和 64 位十六进制加密密钥。可通过 `openssl rand -hex 32` 生成加密密钥。`SMARTQ_DEMO_DATE` 可选，格式为 `YYYY-MM-DD`；未设置时合成数据以运行种子命令当天为基准。
+编辑 `.env.local`，设置本机演示用的数据库密码和 64 位十六进制加密密钥。可通过 `openssl rand -hex 32` 生成加密密钥。`MYSQL_HOST_PORT` 是本机访问演示 MySQL 的端口，默认 `3306`；若该端口已被占用，可改为 `3307` 等空闲端口。`SMARTQ_DEMO_DATE` 可选，格式为 `YYYY-MM-DD`；未设置时合成数据以运行种子命令当天为基准。
 
 ```bash
 pnpm install
@@ -23,7 +23,7 @@ pnpm db:seed
 pnpm dev
 ```
 
-浏览器打开 <http://127.0.0.1:5173>。第一次使用时，在“数据源管理”页使用 Compose 演示库的连接参数：主机 `127.0.0.1`、端口 `3306`、数据库 `smartq_demo`、用户 `smartq_reader`、密码为 `.env.local` 中的 `MYSQL_READER_PASSWORD`。
+浏览器打开 <http://127.0.0.1:5173>。第一次使用时，在“数据源管理”页使用 Compose 演示库的连接参数：主机 `127.0.0.1`、端口为 `.env.local` 中的 `MYSQL_HOST_PORT`（默认 `3306`）、数据库 `smartq_demo`、用户 `smartq_reader`、密码为 `.env.local` 中的 `MYSQL_READER_PASSWORD`。点击“测试连接”成功后，再点击“保存连接”，随后选择 `orders` 表并预览样例数据。
 
 ## 常用命令
 

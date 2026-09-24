@@ -1,14 +1,15 @@
 import dotenv from 'dotenv';
-import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import mysql from 'mysql2/promise';
 import { randomUUID } from 'node:crypto';
-dotenv.config({ path: resolve(process.cwd(), '.env.local') });
+dotenv.config({ path: fileURLToPath(new URL('../../../.env.local', import.meta.url)) });
 
-const date = process.env.SMARTQ_DEMO_DATE ?? new Date().toISOString().slice(0, 10);
+const configuredDate = process.env.SMARTQ_DEMO_DATE?.trim() ?? '';
+const date = configuredDate ? configuredDate : new Date().toISOString().slice(0, 10);
 if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error('SMARTQ_DEMO_DATE 格式应为 YYYY-MM-DD');
 const connection = await mysql.createConnection({
   host: '127.0.0.1',
-  port: 3306,
+  port: Number(process.env.MYSQL_HOST_PORT ?? 3306),
   user: 'root',
   password: process.env.MYSQL_ROOT_PASSWORD,
   database: 'smartq_demo',

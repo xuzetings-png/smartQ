@@ -169,7 +169,7 @@ data/                         本地 SQLite；不提交到版本库
 - 业务术语：术语、定义、同义词、可选目标字段。术语必须关联到当前资源字段或当前资源，不支持全企业术语库。
 - 推荐问题：每个资源最多 4 条；列表顺序即问数页面展示顺序。
 - 样例调试：管理员在本页输入自然语言问题，调用 `POST /api/resources/:resourceId/plan-preview`，查看模型计划、字段映射和校验错误；调试不执行 SQL，也不产生正式会话。
-- 发布：需要资源名有效、至少一个可问指标、所有可问字段的类型与聚合配置有效；保存成功后 `status=active`。
+- 发布：资源名有效且至少一个指标或维度字段允许问数即可；命名指标和推荐问题可选，已填写的命名指标仍须全部通过字段、聚合及固定过滤校验。新资源按类型和字段名称规则初始化可问范围；保存成功后 `status=active`。
 - 结构变更：显示新增/变更/删除字段的差异。新增字段默认不可问；发生变更时资源转为 `needs_review`。管理员保存复核后的字段配置并确认当前 `schemaHash` 后才能重新发布。
 
 ### 3.4 管理员：模型配置页面
@@ -467,7 +467,7 @@ Express 按四层组织。路由只处理 HTTP、SSE 和共享 schema 校验，�
 }
 ```
 
-若 `status=active`，必须包含最新 `reviewedSchemaHash`、至少一个启用指标；如果资源 `needs_review`，该 hash 是解除复核状态的必要条件。`allowedAggregations` 由后端按类型生成，不接受客户端写入；`defaultAggregation` 必须是生成列表中的值。成功响应为更新后的资源详情。
+若 `status=active`，必须包含最新 `reviewedSchemaHash`，且至少一个指标或维度字段允许问数；命名指标可以为空。如果资源 `needs_review`，该 hash 是解除复核状态的必要条件。`allowedAggregations` 由后端按类型生成，不接受客户端写入；`defaultAggregation` 必须是生成列表中的值。成功响应为更新后的资源详情。
 
 #### `POST /api/resources/:resourceId/schema/refresh`
 

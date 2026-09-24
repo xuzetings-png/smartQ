@@ -1,9 +1,9 @@
 import dotenv from 'dotenv';
-import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { createApp } from './http/createApp.js';
 import { db } from './infrastructure/sqlite/database.js';
 
-dotenv.config({ path: resolve(process.cwd(), '.env.local') });
+dotenv.config({ path: fileURLToPath(new URL('../../../.env.local', import.meta.url)) });
 
 const port = Number(process.env.API_PORT ?? 3000);
 const server = createApp().listen(port, '127.0.0.1', () => {

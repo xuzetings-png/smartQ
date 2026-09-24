@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert, Button, Card, Dropdown, Layout, Menu, Typography } from 'antd';
+import { Button, Card, Dropdown, Layout, Menu, Typography } from 'antd';
 import {
   AppstoreOutlined,
   BarChartOutlined,
@@ -8,6 +8,7 @@ import {
   ApiOutlined,
 } from '@ant-design/icons';
 import { DataSourcePage } from '../features/data-source/DataSourcePage';
+import { ResourcePage } from '../features/resource/ResourcePage';
 
 const { Header, Sider, Content } = Layout;
 const { Paragraph, Title } = Typography;
@@ -25,10 +26,10 @@ const pageLabels: Record<PageId, string> = {
 export function AppShell() {
   const [activePage, setActivePage] = useState<PageId>('data-source');
   const [demoRole, setDemoRole] = useState<DemoRole>('admin');
-  const [createdResource, setCreatedResource] = useState<{ name: string; id: string } | null>(null);
+  const [selectedResourceId, setSelectedResourceId] = useState<string>();
 
-  const handleResourceCreated = (name: string, id: string) => {
-    setCreatedResource({ name, id });
+  const handleResourceCreated = (_name: string, id: string) => {
+    setSelectedResourceId(id);
     setActivePage('resource');
   };
 
@@ -85,8 +86,15 @@ export function AppShell() {
         <Content className="page-content">
           {activePage === 'data-source' ? (
             <DataSourcePage onResourceCreated={handleResourceCreated} />
+          ) : activePage === 'resource' ? (
+            <ResourcePage
+              initialResourceId={selectedResourceId}
+              onGoToDataSources={() => {
+                setActivePage('data-source');
+              }}
+            />
           ) : (
-            <NotImplementedPage page={activePage} createdResource={createdResource} />
+            <NotImplementedPage page={activePage} />
           )}
         </Content>
       </Layout>
@@ -94,27 +102,7 @@ export function AppShell() {
   );
 }
 
-function NotImplementedPage({
-  page,
-  createdResource,
-}: {
-  page: PageId;
-  createdResource: { name: string; id: string } | null;
-}) {
-  if (page === 'resource' && createdResource) {
-    return (
-      <Card className="placeholder-card">
-        <Title level={3}>问数资源配置</Title>
-        <Alert
-          type="success"
-          showIcon
-          message={`已创建「${createdResource.name}」资源草稿`}
-          description={`资源编号：${createdResource.id}。下一步将配置字段含义和可问范围。`}
-        />
-      </Card>
-    );
-  }
-
+function NotImplementedPage({ page }: { page: PageId }) {
   return (
     <Card className="placeholder-card">
       <Title level={3}>{pageLabels[page]}</Title>
