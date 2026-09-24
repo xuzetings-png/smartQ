@@ -39,7 +39,7 @@ openspec/
 
 ## 本地质量门禁
 
-执行 `pnpm quality` 完成本地验收。该命令依次确认 Node 主版本、校验所有活跃与归档 OpenSpec 变更、检查格式、运行 ESLint、执行 Vitest 回归用例并构建所有工作区。GitHub Actions 对推送和拉取请求运行同一命令，避免本地和 CI 使用不同验收标准。
+执行 `pnpm check:diagnostics` 检查格式、全仓库 ESLint、CSS Stylelint、Bash 语法、Docker Compose 配置和工作区构建。交付前执行 `pnpm quality`，它还会确认 Node 主版本、校验所有活跃与归档 OpenSpec 变更并运行 Vitest 回归用例。GitHub Actions 对推送和拉取请求运行同一命令，避免本地和 CI 使用不同验收标准。
 
 OpenSpec 的 `--strict` 模式要求英文需求使用 RFC 2119 的 `SHALL/MUST` 关键字；本项目需求使用中文，因此门禁执行结构校验但不启用这条英文措辞规则。校验器可能保留提示型警告；若实际用户行为发生变化，仍要用中文更新对应场景。
 

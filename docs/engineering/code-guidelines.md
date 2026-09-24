@@ -37,7 +37,9 @@
 ## 质量门禁
 
 - `pnpm format` 统一格式；`pnpm format:check` 检查格式，不通过手工争论格式差异。
-- `pnpm lint` 使用 ESLint 检查 TypeScript、React Hooks 和类型安全规则；优先修复代码，只有规则确实不适用时才在最小范围内写明理由并局部关闭。
+- `pnpm lint` 使用 ESLint 检查全仓库 JavaScript、TypeScript、React Hooks 和类型安全规则，并将警告视为失败；`pnpm lint:css` 使用 Stylelint 检查 CSS。
+- `pnpm check:shell` 检查演示数据库 Bash 脚本语法；`pnpm check:compose` 检查 Compose 配置但不启动容器；`pnpm build` 检查各工作区 TypeScript、CSS 处理和生产构建。
+- 每次代码或配置改动后执行 `pnpm check:diagnostics`；交付前执行 `pnpm quality`。新增文件类型时，先确定编辑器诊断来源，再将检查接入诊断命令与 CI。
 - `pnpm test` 运行 Vitest 回归用例；优先覆盖请求边界、业务规则和状态转换，不为尚未实现的流程写模拟性测试。
-- `pnpm build` 检查各工作区的 TypeScript 和生产构建。
-- `pnpm quality` 依次检查运行环境、OpenSpec 变更、格式、lint、回归用例和构建。合并或交付前运行此命令；依赖变更应通过 pnpm 更新工作区清单和锁文件。
+- 前端 TypeScript 编辑器诊断使用 `apps/web/package.json` 锁定的工作区版本；交付时确保可读取的问题面板没有工作区错误。
+- `pnpm quality` 检查运行环境、OpenSpec 变更、全仓库静态诊断和回归用例；依赖变更应通过 pnpm 更新工作区清单和锁文件。

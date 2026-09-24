@@ -2,6 +2,7 @@ import js from '@eslint/js';
 import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
 import eslintConfigPrettier from 'eslint-config-prettier/flat';
+import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
@@ -38,6 +39,19 @@ export default tseslint.config(
       ],
       eqeqeq: ['error', 'always'],
       'no-console': ['warn', { allow: ['info', 'warn', 'error'] }],
+    },
+  },
+  {
+    files: ['vite.config.ts', 'vitest.config.ts'],
+    extends: [...tseslint.configs.recommended],
+  },
+  {
+    files: ['**/*.{js,mjs,cjs}'],
+    extends: [js.configs.recommended],
+    languageOptions: {
+      ecmaVersion: 'latest',
+      sourceType: 'module',
+      globals: globals.node,
     },
   },
   {

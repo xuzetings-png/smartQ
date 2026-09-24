@@ -19,4 +19,7 @@ If `.codegraph/` is absent, skip CodeGraph; indexing is the user's decision.
 - 实施过程中更新任务状态；若新事实改变了预期行为，同步修订相应变更文档。不要超出当前提案扩展范围。
 - 只有在验收场景已检查、规格增量已合并到 `openspec/specs/`、变更已归档后，才算完成一个变更。
 - 修改或新增代码前先读 [docs/engineering/code-guidelines.md](docs/engineering/code-guidelines.md)；按功能组织模块，保持页面、业务逻辑和基础设施各司其职。
-- 交付前执行 `pnpm quality`；该命令检查 Node 版本、OpenSpec 文档、格式、lint、回归用例和构建。修复检查发现的问题，不以禁用规则代替修复。
+- 每次代码或配置改动完成后运行 `pnpm check:diagnostics`；交付前运行 `pnpm quality`。新增文件类型时，先为它配置编辑器诊断，再把相同检查接入 `check:diagnostics` 和 CI。
+- 项目命令必须在 `.nvmrc` 指定的 Node.js 版本下运行。若 Codex 外层 `node -v` 与 `.nvmrc` 不符，先用 `zsh -lic 'node -v'` 核对登录 shell，再用 `zsh -lic 'pnpm quality'` 执行门禁。
+- 修改 TypeScript 前端文件时，编辑器选用工作区 TypeScript 版本。可读取编辑器问题面板时，交付前确认工作区错误为零；无法读取时，以 Node.js 24 下 `pnpm quality` 通过作为仓库可复现的验收，并说明未检查的编辑器专属诊断。
+- 修复诊断本身，不通过忽略文件、降低规则或无理由禁用检查来清零。

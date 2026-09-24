@@ -13,17 +13,25 @@ Harness engineering 的重点是把工程师的判断转成仓库内清楚、可
 
 ## 当前自动门禁
 
-| 命令                 | 检查内容                             |
-| -------------------- | ------------------------------------ |
-| `pnpm check:runtime` | 当前 Node 主版本与 `.nvmrc` 一致     |
-| `pnpm check:spec`    | 活跃变更和归档变更的 OpenSpec 结构   |
-| `pnpm format:check`  | 源码、配置及本次工程文档格式         |
-| `pnpm lint`          | 应用、共享包和回归用例的 ESLint 规则 |
-| `pnpm test`          | Vitest 确定性回归用例                |
-| `pnpm build`         | 工作区 TypeScript 检查及生产构建     |
-| `pnpm quality`       | 以上检查按固定顺序执行               |
+| 命令                     | 检查内容                                            |
+| ------------------------ | --------------------------------------------------- |
+| `pnpm check:runtime`     | 当前 Node 主版本与 `.nvmrc` 一致                    |
+| `pnpm check:spec`        | 活跃变更和归档变更的 OpenSpec 结构                  |
+| `pnpm format:check`      | 全仓库受支持的源码、配置及 Markdown 格式            |
+| `pnpm lint`              | 全仓库 JavaScript / TypeScript ESLint；警告也会失败 |
+| `pnpm lint:css`          | 全仓库 CSS 的 Stylelint 标准规则                    |
+| `pnpm check:shell`       | 演示数据库 Bash 脚本语法                            |
+| `pnpm check:compose`     | Compose 配置和环境变量替换，不启动容器              |
+| `pnpm build`             | 工作区 TypeScript 检查、CSS 处理和生产构建          |
+| `pnpm check:diagnostics` | 格式、ESLint、Stylelint、Shell、Compose 和构建诊断  |
+| `pnpm test`              | Vitest 确定性回归用例                               |
+| `pnpm quality`           | Node、OpenSpec、诊断门禁和回归用例                  |
 
-GitHub Actions 在推送和拉取请求上运行 `pnpm quality`。本地与 CI 使用 Node.js 24、pnpm 10.34.2 和提交的 `pnpm-lock.yaml`。
+GitHub Actions 在推送和拉取请求上运行 `pnpm quality`。本地与 CI 使用 Node.js 24、pnpm 10.34.2 和提交的 `pnpm-lock.yaml`。macOS 工作区终端使用登录 zsh 加载 NVM；新建终端后先运行 `node -v` 核对为 24.x。若 Codex 命令执行器的外层 `node -v` 显示 Node.js 20，需在登录 zsh 中执行项目命令：`zsh -lic 'pnpm quality'`；外层进程注入的 PATH 不代表工作区终端设置。
+
+VS Code 的工作区 TypeScript SDK 固定指向 `apps/web/node_modules/typescript/lib`，并开启切换提示。首次打开项目出现提示时选择工作区版本；若状态栏仍显示其他版本，运行 `TypeScript: Select TypeScript Version` 并选择工作区版本。项目建议 ESLint、Prettier 和 Stylelint 扩展；命令行质量门禁是最终依据。
+
+“零诊断”表示仓库声明并可在本地和 CI 重复运行的检查全部通过。个人安装的编辑器扩展或远程语言服务可能产生仓库门禁不覆盖的诊断；新增源码或配置文件类型时，必须把编辑器诊断来源和对应检查一并接入 `check:diagnostics`。
 
 ## 怎么扩展回归覆盖
 
